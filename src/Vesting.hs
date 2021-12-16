@@ -31,13 +31,12 @@ import           Playground.TH        (mkKnownCurrencies, mkSchemaDefinitions)
 import           Playground.Types     (KnownCurrency (..))
 import           Prelude              (IO, Semigroup (..), Show (..), String)
 import           Text.Printf          (printf)
-import Ledger.Constraints.OffChain (ownPubKeyHash)
-import Data.String ( IsString )
-import qualified GHC.Base as Haskell
+import           Data.String          ( IsString )
+import qualified GHC.Base             as Haskell
 
 
 data VestingDatum = VestingDatum
-    { beneficiary :: PubKeyHash
+    { beneficiary :: PaymentPubKeyHash
     , deadline    :: POSIXTime
     } deriving Show
 
@@ -52,7 +51,7 @@ mkValidator dat () ctx = traceIfFalse "beneficiary's signature missing" signedBy
     info = scriptContextTxInfo ctx
 
     signedByBeneficiary :: Bool
-    signedByBeneficiary = txSignedBy info $ beneficiary dat
+    signedByBeneficiary = txSignedBy info $ unPaymentPubKeyHash $ beneficiary dat
 
     deadlineReached :: Bool
     deadlineReached = contains (from $ deadline dat) $ txInfoValidRange info
@@ -79,7 +78,7 @@ scrAddress :: Ledger.Address
 scrAddress = scriptAddress validator 
 
 data GiveParams = GiveParams
-    { gpBeneficiary :: !PubKeyHash
+    { gpBeneficiary :: !PaymentPubKeyHash
     , gpDeadline    :: !POSIXTime
     , gpAmount      :: !Integer
     } deriving (Generic, ToJSON, FromJSON, ToSchema)
@@ -102,7 +101,7 @@ give = endpoint @"give" @GiveParams $ \(GiveParams b d a ) -> do
 grab :: (AsContractError e, IsString e) => Promise w VestingSchema e ()
 grab = endpoint @"grab" $ \_ -> do
     now   <- currentTime
-    pkh   <- Plutus.Contract.ownPubKeyHash
+    pkh   <- Plutus.Contract.ownPaymentPubKeyHash
     utxos <- utxosAt scrAddress
     (oref, _, datum) <- findTheDatum utxos pkh now
     logInfo @String $ printf "datum %s" (show datum) 
@@ -123,7 +122,7 @@ endpoints = do
     selectList [give, grab] >> endpoints
 
 -- -- | Try to find the datum at script address, tx to https://discord.com/channels/826816523368005654/826829805387120690/898105562003300363
-findTheDatum :: (AsContractError e, IsString e) => Map TxOutRef ChainIndexTxOut -> PubKeyHash -> POSIXTime -> Contract w s e (TxOutRef, ChainIndexTxOut, PlutusTx.BuiltinData )
+findTheDatum :: (AsContractError e, IsString e) => Map TxOutRef ChainIndexTxOut -> PaymentPubKeyHash -> POSIXTime -> Contract w s e (TxOutRef, ChainIndexTxOut, PlutusTx.BuiltinData )
 findTheDatum utxos pkh now =
   searchForDatum (Map.toList utxos)
   where

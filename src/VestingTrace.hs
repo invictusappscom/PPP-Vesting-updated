@@ -27,7 +27,7 @@ runMyTrace = do
     h1 <- activateContractWallet w1 (endpoints @ContractError)
     h2 <- activateContractWallet w2 (endpoints @ContractError)
     callEndpoint @"give" h1 $ GiveParams
-        { gpBeneficiary = walletPubKeyHash w2
+        { gpBeneficiary = mockWalletPaymentPubKeyHash w2
         , gpDeadline    = slotToBeginPOSIXTime def 20
         , gpAmount      = 10000000
         }
@@ -41,7 +41,7 @@ giveAndGrab wallet1 wallet2 = do
     h1 <- activateContractWallet wallet1 (endpoints @ContractError)
     h2 <- activateContractWallet wallet2 (endpoints @ContractError)
     callEndpoint @"give" h1 $ GiveParams
-        { gpBeneficiary = walletPubKeyHash w2
+        { gpBeneficiary = mockWalletPaymentPubKeyHash w2
         , gpDeadline    = slotToBeginPOSIXTime def 20
         , gpAmount      = 10000000
         }

@@ -56,7 +56,9 @@ library
       plutus-tx,
       plutus-ledger,
       text,
-      data-default
+      data-default,
+      plutus-ledger-constraints
+
     hs-source-dirs: src examples/src
 
 test-suite vesting-test
@@ -117,4 +119,5 @@ executable plutus-starter-pab
     freer-extras -any,
     plutus-ledger -any,
     openapi3 -any,
+    purescript-bridge,
 
